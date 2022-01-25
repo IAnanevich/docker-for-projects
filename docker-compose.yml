@@ -1,0 +1,40 @@
+version: '3.7'
+services:
+  web:
+    build:
+      context: terraces
+      dockerfile: Dockerfile
+    volumes:
+      - ./terraces/:/app
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+    env_file:
+      - terraces/.env
+  celery:
+    build: ./terraces/
+    command: celery -A terraces worker -B
+    volumes:
+        - ./terraces/:/app
+    env_file:
+      - terraces/.env
+    depends_on:
+        - web
+        - redis
+        - db
+  redis:
+    image: redis
+    ports:
+      - 6379:6379
+    command: redis-server
+    volumes:
+      - ./terraces-redis:/data
+  db:
+    image: postgres:12-alpine
+    ports:
+      - 5434:5432
+    env_file:
+      terraces/.env
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data/
